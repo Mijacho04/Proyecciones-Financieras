@@ -1,24 +1,47 @@
 import streamlit as st
 import pandas as pd
 
-# 1. Diseño básico de la página
-st.title("Sistema de Proyecciones Financieras Cooperativas")
-st.write("Sube el archivo Excel de tu empresa para generar el análisis.")
+# Configuramos la página para que se vea profesional
+st.set_page_config(page_title="Finanzas Proyectadas", layout="wide")
 
-# 2. Botón para que el cliente suba el archivo
-archivo_subido = st.file_uploader("Cargar archivo Excel", type=["xlsx", "xls"])
+st.title("Sistema de Proyecciones Financieras")
+st.write("Bienvenido. Comencemos cargando la información base de tu empresa.")
 
-# 3. Lógica cuando el archivo se carga
+# --- PASO 1: MEMORIA DE LA APP ---
+# Esto evita que la página olvide los datos al hacer clic en botones
+if 'datos_empresa' not in st.session_state:
+    st.session_state['datos_empresa'] = None
+
+# --- PASO 2: BOTÓN CARGAR ---
+archivo_subido = st.file_uploader("Elige tu archivo Excel", type=["xlsx"])
+
 if archivo_subido is not None:
-        # Leemos el archivo tal como lo harías normalmente
+    # Leemos el archivo y lo guardamos en la "memoria" de la sesión
     df = pd.read_excel(archivo_subido)
+    st.session_state['datos_empresa'] = df
+    st.success("✅ Archivo cargado y guardado en memoria con éxito.")
+
+# --- PASO 3: BOTÓN VER Y OPCIÓN SUMAS Y SALDOS ---
+# Solo mostramos estas opciones si ya hay un archivo cargado
+if st.session_state['datos_empresa'] is not None:
+    st.divider() # Una línea decorativa
     
-    st.success("¡Archivo cargado con éxito!")
-    
-    # Mostramos una vista previa de los datos
-    st.write("Vista previa de los datos:")
-    st.dataframe(df.head())
-    
-    # Aquí es donde, poco a poco, iremos insertando tus cálculos
-    # st.write("Calculando proyecciones de Cartera y Depósitos...")
-    # ...
+    col1, col2 = st.columns([1, 3]) # Dividimos en columnas para que se vea ordenado
+
+    with col1:
+        st.subheader("Menú de Análisis")
+        # El botón "Ver" que despliega la opción
+        if st.button("Ver Sumas y Saldos"):
+            st.session_state['ver_analisis'] = True
+        else:
+            if 'ver_analisis' not in st.session_state:
+                st.session_state['ver_analisis'] = False
+
+    with col2:
+        if st.session_state.get('ver_analisis'):
+            st.subheader("📊 Despliegue: Sumas y Saldos")
+            # Mostramos la tabla de datos del Excel
+            st.dataframe(st.session_state['datos_empresa'], use_container_width=True)
+            
+            # Un pequeño resumen automático para impresionar al cliente
+            st.info(f"El archivo contiene {len(st.session_state['datos_empresa'])} registros contables.")
